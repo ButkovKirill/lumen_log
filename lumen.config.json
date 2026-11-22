@@ -1,4 +1,9 @@
 {
-    "logInFile": true,
-    "nameCaller": true
+    "logInFile": false,
+    "nameCaller": true,
+    "nameFileCaller": true,
+    "timeCall": true,
+    "dateCall": true,
+    "padding": false,
+    "marker": "⏺"
 }

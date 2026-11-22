@@ -1,6 +1,8 @@
+import type { ILumenOptions } from "../types/loggerTypes.ts"
+
 export const getDateAndTimeField = (
-    showTime: boolean = true,
-    showDate: boolean = true
+    showTime: boolean | undefined,
+    showDate: boolean | undefined
 ) => {
     const dateAndTime = new Date()
     const dateInfo = {

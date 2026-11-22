@@ -1,15 +1,17 @@
 import type { Colors } from "../Logger/colors.ts"
 
-export interface ILoggerOptions {
+export interface ILumenOptions {
     logInFile?: boolean,
     nameCaller?: boolean,
     nameFileCaller?: boolean,
     timeCall?: boolean,
-    dateCall?: boolean
+    dateCall?: boolean,
+    padding?: boolean,
+    marker?: string
 }
 
 export interface ILoggerProps {
-    options?: ILoggerOptions,
+    options?: ILumenOptions,
     meta? : any[]
 }
 
