@@ -42,6 +42,13 @@ const main = () => {
     }
   })   
 
+  Lumen.warn('Warn for telegram bot', {
+    options: {
+      telegram: {
+        logInTelegram: true,
+      }
+    }
+  })
 }
 
 main()

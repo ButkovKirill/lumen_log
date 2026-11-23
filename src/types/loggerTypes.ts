@@ -1,8 +1,15 @@
 import type { Colors } from "../Logger/colors.ts"
 
+interface ITelegram {
+    logInTelegram?: boolean,
+    api?: string | undefined,
+    chatsIds?: Array<number> | undefined
+}
+
 export interface ILumenOptions {
     logInFile?: boolean,
     logInFileForDebug?: boolean,
+    telegram?: ITelegram,
     nameCaller?: boolean,
     nameFileCaller?: boolean,
     timeCall?: boolean,

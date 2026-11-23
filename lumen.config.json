@@ -1,6 +1,11 @@
 {
     "logInFile": false,
     "logInFileForDebug": false,
+    "telegram": {
+        "logInTelegram": false,
+        "api": "your api bot",
+        "chatsIds": []
+    },
     "nameCaller": true,
     "nameFileCaller": true,
     "timeCall": true,

@@ -4,6 +4,7 @@ import { getCallerInfoField, getDateAndTimeField } from "./loggerTools.ts"
 import { getColorForElement } from "./themes.ts"
 import { getConfig } from "./config.ts"
 import { getFilePath, getLogsFilesDirectory, printLogInFile } from "./fileManager.ts"
+import { sendTelegramMessage } from "./telegram.ts"
 
 export class Lumen {
     // Private
@@ -51,7 +52,7 @@ export class Lumen {
         return text
     }
 
-    private static buildLogForFile(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
+    private static buildLogWithoutColorize(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
         const {dateAndTime, callerInfo} = this.getInfo(props, 6)
 
         const separator = dateAndTime || callerInfo ? ' ' : ''
@@ -82,9 +83,25 @@ export class Lumen {
 
         const directory = getLogsFilesDirectory()
         const filePath = getFilePath(typeLog, directory)
-        const textForLog = this.buildLogForFile(message, typeLog, props)
+        const textForLog = this.buildLogWithoutColorize(message, typeLog, props)
 
         printLogInFile(filePath, textForLog)
+    }
+
+    private static logInTelegram(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
+        const canSend = props?.options?.telegram?.logInTelegram ?? this.config.telegram?.logInTelegram
+        const api = props?.options?.telegram?.api ?? this.config.telegram?.api
+        const chatsIds = props?.options?.telegram?.chatsIds ?? this.config.telegram?.chatsIds
+
+        const canSendToTelegram = canSend && api && chatsIds
+        
+        if (!canSendToTelegram){
+            return
+        }
+        
+        const textMessage = this.buildLogWithoutColorize(message, typeLog, props)
+
+        sendTelegramMessage(textMessage, api, chatsIds)
     }
 
     // Public functions
@@ -92,29 +109,34 @@ export class Lumen {
         const textLog = this.buildLog(message, 'log', props)
         console.log(textLog)
         this.logInFile(message, 'log', props)
+        this.logInTelegram(message, 'log', props)
     }
 
     static debug(message: Message, props?: ILoggerProps): void {
         const textLog = this.buildLog(message, 'debug', props)
         console.log(textLog)
         this.logInFile(message, 'debug', props)
+        this.logInTelegram(message, 'debug', props)
     }
 
     static ok(message: Message, props?: ILoggerProps): void {
         const textLog = this.buildLog(message, 'ok', props)
         console.log(textLog)
         this.logInFile(message, 'ok', props)
+        this.logInTelegram(message, 'ok', props)
     }
 
     static error(message: Message, props?: ILoggerProps): void {
         const textLog = this.buildLog(message, 'error', props)
         console.log(textLog)
         this.logInFile(message, 'error', props)
+        this.logInTelegram(message, 'error', props)
     }
 
     static warn(message: Message, props?: ILoggerProps): void {
         const textLog = this.buildLog(message, 'warn', props)
         console.log(textLog)
         this.logInFile(message, 'warn', props)
+        this.logInTelegram(message, 'warn', props)
     }
 }
