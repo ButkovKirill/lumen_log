@@ -1,4 +1,4 @@
-import type { ILoggerProps, Message, TypeLog } from "../types/loggerTypes.ts"
+import type { ILog, ILoggerProps, Message, TypeLog } from "../types/loggerTypes.ts"
 import { colorize } from "./colors.ts"
 import { getCallerInfoField, getDateAndTimeField } from "./loggerTools.ts"
 import { getColorForElement } from "./themes.ts"
@@ -30,48 +30,48 @@ export class Lumen {
         }
     }
 
-    private static buildLog(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
-        const colorMarker = getColorForElement('marker', typeLog) 
-        const colorDate = getColorForElement('date', typeLog)
-        const colorCaller = getColorForElement('caller', typeLog)
-        const colorText = getColorForElement('text', typeLog)
+    private static buildLog(dataLog: ILog) {
+        const colorMarker = getColorForElement('marker', dataLog.logType) 
+        const colorDate = getColorForElement('date', dataLog.logType)
+        const colorCaller = getColorForElement('caller', dataLog.logType)
+        const colorText = getColorForElement('text', dataLog.logType)
 
-        const {dateAndTime, callerInfo} = this.getInfo(props)
+        const {dateAndTime, callerInfo} = this.getInfo(dataLog.props)
 
         const separator = dateAndTime || callerInfo ? ' ' : ''
 
-        const padding = props?.options?.padding ?? this.config.padding ? '\n' : ''
+        const padding = dataLog.props?.options?.padding ?? this.config.padding ? '\n' : ''
 
-        const marker = `${colorize(props?.options?.marker ?? '⏺', colorMarker)} `
-        const loggerType = colorize(`[${typeLog.toUpperCase()}]`, colorMarker)
+        const marker = `${colorize(dataLog.props?.options?.marker ?? '⏺', colorMarker)} `
+        const loggerType = colorize(`[${dataLog.logType.toUpperCase()}]`, colorMarker)
         const fields = `${colorize(dateAndTime, colorDate)}${separator}${colorize(callerInfo, colorCaller)}`
-        const textForMessage = colorize(message, colorText)
+        const textForMessage = colorize(dataLog.message, colorText)
 
         const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${textForMessage}${padding}`
 
         return text
     }
 
-    private static buildLogWithoutColorize(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
-        const {dateAndTime, callerInfo} = this.getInfo(props, 6)
+    private static buildLogWithoutColorize(dataLog: ILog) {
+        const {dateAndTime, callerInfo} = this.getInfo(dataLog.props, 6)
 
         const separator = dateAndTime || callerInfo ? ' ' : ''
 
-        const padding = props?.options?.padding ?? this.config.padding ? '\n' : ''
+        const padding = dataLog.props?.options?.padding ?? this.config.padding ? '\n' : ''
 
-        const marker = props?.options?.marker ?? '⏺'
-        const loggerType = `[${typeLog.toUpperCase()}]`
+        const marker = dataLog.props?.options?.marker ?? '⏺'
+        const loggerType = `[${dataLog.logType.toUpperCase()}]`
         const fields = `${dateAndTime}${separator}${callerInfo}`
 
-        const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${message}${padding}`
+        const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${dataLog.message}${padding}`
 
         return text
     }
 
-    private static logInFile(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
-        const canWrite = props?.options?.logInFile ?? this.config.logInFile
-        const isDebug = typeLog === 'debug'
-        const isWriteDebug = props?.options?.logInFileForDebug
+    private static logInFile(dataLog: ILog) {
+        const canWrite = dataLog.props?.options?.logInFile ?? this.config.logInFile
+        const isDebug = dataLog.logType === 'debug'
+        const isWriteDebug = dataLog.props?.options?.logInFileForDebug
         
         if (!canWrite) {
             return
@@ -82,16 +82,16 @@ export class Lumen {
         }
 
         const directory = getLogsFilesDirectory()
-        const filePath = getFilePath(typeLog, directory)
-        const textForLog = this.buildLogWithoutColorize(message, typeLog, props)
+        const filePath = getFilePath(dataLog.logType, directory)
+        const textForLog = this.buildLogWithoutColorize(dataLog)
 
         printLogInFile(filePath, textForLog)
     }
 
-    private static logInTelegram(message: Message, typeLog: TypeLog, props?: ILoggerProps) {
-        const canSend = props?.options?.telegram?.logInTelegram ?? this.config.telegram?.logInTelegram
-        const api = props?.options?.telegram?.api ?? this.config.telegram?.api
-        const chatsIds = props?.options?.telegram?.chatsIds ?? this.config.telegram?.chatsIds
+    private static logInTelegram(dataLog: ILog) {
+        const canSend = dataLog.props?.options?.telegram?.logInTelegram ?? this.config.telegram?.logInTelegram
+        const api = dataLog.props?.options?.telegram?.api ?? this.config.telegram?.api
+        const chatsIds = dataLog.props?.options?.telegram?.chatsIds ?? this.config.telegram?.chatsIds
 
         const canSendToTelegram = canSend && api && chatsIds
         
@@ -99,44 +99,69 @@ export class Lumen {
             return
         }
         
-        const textMessage = this.buildLogWithoutColorize(message, typeLog, props)
+        const textMessage = this.buildLogWithoutColorize(dataLog)
 
         sendTelegramMessage(textMessage, api, chatsIds)
     }
 
     // Public functions
     static log(message: Message, props?: ILoggerProps): void {
-        const textLog = this.buildLog(message, 'log', props)
+        const dataLog: ILog = {
+            message,
+            logType: 'log',
+            props
+        }
+        const textLog = this.buildLog(dataLog)
         console.log(textLog)
-        this.logInFile(message, 'log', props)
-        this.logInTelegram(message, 'log', props)
+        this.logInFile(dataLog)
+        this.logInTelegram(dataLog)
     }
 
     static debug(message: Message, props?: ILoggerProps): void {
-        const textLog = this.buildLog(message, 'debug', props)
+        const dataLog: ILog = {
+            message,
+            logType: 'debug',
+            props
+        }
+        const textLog = this.buildLog(dataLog)
         console.log(textLog)
-        this.logInFile(message, 'debug', props)
-        this.logInTelegram(message, 'debug', props)
+        this.logInFile(dataLog)
+        this.logInTelegram(dataLog)
     }
 
     static ok(message: Message, props?: ILoggerProps): void {
-        const textLog = this.buildLog(message, 'ok', props)
+        const dataLog: ILog = {
+            message,
+            logType: 'ok',
+            props
+        }
+        const textLog = this.buildLog(dataLog)
         console.log(textLog)
-        this.logInFile(message, 'ok', props)
-        this.logInTelegram(message, 'ok', props)
+        this.logInFile(dataLog)
+        this.logInTelegram(dataLog)
     }
 
     static error(message: Message, props?: ILoggerProps): void {
-        const textLog = this.buildLog(message, 'error', props)
+        const dataLog: ILog = {
+            message,
+            logType: 'error',
+            props
+        }
+        const textLog = this.buildLog(dataLog)
         console.log(textLog)
-        this.logInFile(message, 'error', props)
-        this.logInTelegram(message, 'error', props)
+        this.logInFile(dataLog)
+        this.logInTelegram(dataLog)
     }
 
     static warn(message: Message, props?: ILoggerProps): void {
-        const textLog = this.buildLog(message, 'warn', props)
+        const dataLog: ILog = {
+            message,
+            logType: 'warn',
+            props
+        }
+        const textLog = this.buildLog(dataLog)
         console.log(textLog)
-        this.logInFile(message, 'warn', props)
-        this.logInTelegram(message, 'warn', props)
+        this.logInFile(dataLog)
+        this.logInTelegram(dataLog)
     }
 }

@@ -23,6 +23,12 @@ export interface ILoggerProps {
     meta? : any[]
 }
 
+export interface ILog {
+    message: Message,
+    logType: TypeLog,
+    props?: ILoggerProps | undefined
+}
+
 export type Color = keyof typeof Colors
 export type ITheme = Record<ElementLog, Record<TypeLog, Color>>
 
