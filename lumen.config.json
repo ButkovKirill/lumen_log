@@ -1,5 +1,6 @@
 {
     "logInFile": false,
+    "logInFileForDebug": false,
     "nameCaller": true,
     "nameFileCaller": true,
     "timeCall": true,

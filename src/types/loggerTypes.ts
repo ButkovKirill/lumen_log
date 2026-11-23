@@ -2,6 +2,7 @@ import type { Colors } from "../Logger/colors.ts"
 
 export interface ILumenOptions {
     logInFile?: boolean,
+    logInFileForDebug?: boolean,
     nameCaller?: boolean,
     nameFileCaller?: boolean,
     timeCall?: boolean,

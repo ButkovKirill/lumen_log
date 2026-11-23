@@ -4,6 +4,7 @@ import type { ILumenOptions } from '../types/loggerTypes.ts'
 
 const defaultConfig: ILumenOptions = {
     logInFile: false,
+    logInFileForDebug: false,
     nameCaller: true,
     nameFileCaller: true,
     timeCall: true,

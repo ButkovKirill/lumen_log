@@ -26,10 +26,11 @@ export const getDateAndTimeField = (
 
 export const getCallerInfoField = (
     showNameCaller: boolean = true,
-    showFileCaller: boolean = true
+    showFileCaller: boolean = true,
+    level: number = 5
 ) => {
     const stack = new Error().stack?.split('\n')
-    const caller = stack?.[5]?.trim()
+    const caller = stack?.[level]?.trim()
     const match = caller?.match(/at (.*?) \((.*?):\d+:\d+\)/)
 
     const functionCallerName = showNameCaller ? (match?.[1] ?? 'unknown_function')+'()' : ''
