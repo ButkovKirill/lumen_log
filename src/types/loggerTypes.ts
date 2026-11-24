@@ -20,13 +20,17 @@ export interface ILumenOptions {
 
 export interface ILoggerProps {
     options?: ILumenOptions,
-    meta? : any[]
+    data? : object
 }
 
 export interface ILog {
     message: Message,
     logType: TypeLog,
     props?: ILoggerProps | undefined
+}
+
+export interface IMetaOptions {
+    colored?: boolean
 }
 
 export type Color = keyof typeof Colors

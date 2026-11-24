@@ -1,7 +1,8 @@
+
 {
-  "name": "lumen_log",
+  "name": "lumen-log",
   "version": "0.1.0",
-  "description": "Продвинутый логгер для Node.js",
+  "description": "A customizable logger for Node.js",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,13 +18,16 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --clean && tsc",
+    "build": "tsup src/index.ts --format esm --clean --out-dir dist && tsc",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "logger",
-    "logging"
+    "logging",
+    "nodejs",
+    "typescript",
+    "console",
+    "lumen-log"
   ],
   "author": "ButkovKirill",
   "license": "MIT",
@@ -33,7 +37,6 @@
   "devDependencies": {
     "@types/node": "^26.6.6",
     "tsup": "^8.5.1",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   }
 }

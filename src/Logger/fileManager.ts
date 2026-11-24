@@ -1,6 +1,6 @@
 import fs, { type NoParamCallback } from 'fs'
 import path from 'path'
-import type { Message, TypeLog } from '../types/loggerTypes.ts'
+import type { Message, TypeLog } from '../types/loggerTypes.js'
 
 export const getLogsFilesDirectory = (): string => {
     console.log('start search logs directory')

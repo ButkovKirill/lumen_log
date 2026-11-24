@@ -1,4 +1,4 @@
-import type { Message } from "../types/loggerTypes.ts"
+import type { Message } from "../types/loggerTypes.js"
 
 interface ITelegramResponse {
     ok: boolean

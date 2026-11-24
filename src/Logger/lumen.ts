@@ -1,10 +1,10 @@
-import type { ILog, ILoggerProps, Message, TypeLog } from "../types/loggerTypes.ts"
-import { colorize } from "./colors.ts"
-import { getCallerInfoField, getDateAndTimeField } from "./loggerTools.ts"
-import { getColorForElement } from "./themes.ts"
-import { getConfig } from "./config.ts"
-import { getFilePath, getLogsFilesDirectory, printLogInFile } from "./fileManager.ts"
-import { sendTelegramMessage } from "./telegram.ts"
+import type { Color, ILog, ILoggerProps, IMetaOptions, Message, TypeLog } from "../types/loggerTypes.js"
+import { colorize, Colors } from "./colors.js"
+import { getCallerInfoField, getDateAndTimeField } from "./loggerTools.js"
+import { getColorForElement } from "./themes.js"
+import { getConfig } from "./config.js"
+import { getFilePath, getLogsFilesDirectory, printLogInFile } from "./fileManager.js"
+import { sendTelegramMessage } from "./telegram.js"
 
 export class Lumen {
     // Private
@@ -30,6 +30,125 @@ export class Lumen {
         }
     }
 
+    private static buildMeta(
+        meta: unknown,
+        options: IMetaOptions = {}
+    ): string {
+        const { colored = true } = options
+
+        const lines: string[] = ['\n~ Data:', '{']
+
+        const colorTypes: Record<string, Color> = {
+            string: 'green',
+            number: 'yellow',
+            boolean: 'red',
+            undefined: 'gray',
+        }
+
+        const indent = (depth: number): string => '  '.repeat(depth)
+
+        const getType = (value: unknown): string => {
+            if (value === null) return 'null'
+            if (Array.isArray(value)) return 'array'
+
+            return typeof value
+        }
+
+        const paint = (value: string, color: Color): string =>
+            colored ? colorize(value, color) : value
+
+        const formatKey = (key: string): string =>
+            paint(key, 'blue') === key || !colored
+                ? (colored ? colorize(colorize(key, 'blue'), 'bold') : key)
+                : colorize(colorize(key, 'blue'), 'bold')
+
+        const formatType = (type: string): string =>
+            paint(`(${type})`, 'magenta')
+
+        const formatValue = (value: unknown): string => {
+            if (typeof value === 'string') return JSON.stringify(value)
+            if (typeof value === 'undefined') return 'undefined'
+            if (typeof value === 'bigint') return `${value}n`
+            if (typeof value === 'symbol') return value.toString()
+
+            if (typeof value === 'function') {
+                return `[Function: ${value.name || 'anonymous'}]`
+            }
+
+            return String(value)
+        }
+
+        const visited = new WeakSet<object>()
+
+        const render = (
+            value: unknown,
+            key: string,
+            depth: number
+        ): void => {
+            const prefix = indent(depth)
+            const formattedKey = colored
+                ? colorize(colorize(key, 'blue'), 'bold')
+                : key
+
+            if (value !== null && typeof value === 'object') {
+                if (visited.has(value)) {
+                    lines.push(`${prefix}${formattedKey}: [Circular]`)
+                    return
+                }
+
+                visited.add(value)
+
+                try {
+                    if (Array.isArray(value)) {
+                        lines.push(
+                            `${prefix}${formattedKey}: [ ${formatType(`array, length: ${value.length}`)}`
+                        )
+
+                        value.forEach((item, index) => {
+                            render(item, `[${index}]`, depth + 1)
+                        })
+
+                        lines.push(`${prefix}]`)
+                    } else {
+                        lines.push(
+                            `${prefix}${formattedKey}: { ${formatType('object')}`
+                        )
+
+                        for (const [childKey, childValue] of Object.entries(value)) {
+                            render(childValue, childKey, depth + 1)
+                        }
+
+                        lines.push(`${prefix}}`)
+                    }
+                } finally {
+                    visited.delete(value)
+                }
+
+                return
+            }
+
+            const type = getType(value)
+            const color = colorTypes[type] ?? 'white'
+            const formattedValue = paint(formatValue(value), color)
+
+            lines.push(
+                `${prefix}${formattedKey}: ${formattedValue} ${formatType(type)}`
+            )
+        }
+
+        if (meta !== null && typeof meta === 'object' && !Array.isArray(meta)) {
+            for (const [key, value] of Object.entries(meta)) {
+                render(value, key, 1)
+            }
+        } else {
+            render(meta, 'value', 1)
+        }
+
+        lines.push('}')
+
+        return lines.join('\n')
+    }
+
     private static buildLog(dataLog: ILog) {
         const colorMarker = getColorForElement('marker', dataLog.logType) 
         const colorDate = getColorForElement('date', dataLog.logType)
@@ -42,12 +161,17 @@ export class Lumen {
 
         const padding = dataLog.props?.options?.padding ?? this.config.padding ? '\n' : ''
 
-        const marker = `${colorize(dataLog.props?.options?.marker ?? '⏺', colorMarker)} `
+        const markerSymbol = (dataLog.props?.options?.marker ?? this.config.marker) ?? '⏺'
+
+        const marker = `${colorize(markerSymbol, colorMarker)} `
         const loggerType = colorize(`[${dataLog.logType.toUpperCase()}]`, colorMarker)
         const fields = `${colorize(dateAndTime, colorDate)}${separator}${colorize(callerInfo, colorCaller)}`
         const textForMessage = colorize(dataLog.message, colorText)
 
-        const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${textForMessage}${padding}`
+        const metaData = dataLog.props?.data
+        const metaField = metaData ? this.buildMeta(metaData) : ''
+
+        const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${textForMessage}${metaField}${padding}`
 
         return text
     }
@@ -63,7 +187,10 @@ export class Lumen {
         const loggerType = `[${dataLog.logType.toUpperCase()}]`
         const fields = `${dateAndTime}${separator}${callerInfo}`
 
-        const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${dataLog.message}${padding}`
+        const metaData = dataLog.props?.data
+        const metaField = metaData ? this.buildMeta(metaData, { colored: false }) : ''
+
+        const text = `${padding}${marker} ${loggerType} ${fields}${separator ? '\n' : ''}${dataLog.message}${metaField}${padding}`
 
         return text
     }

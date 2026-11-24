@@ -1,4 +1,4 @@
-import type { Color, ElementLog, ITheme, TypeLog } from "../types/loggerTypes.ts";
+import type { Color, ElementLog, ITheme, TypeLog } from "../types/loggerTypes.js";
 
 export const getColorForElement = (element: ElementLog, typeLog: TypeLog): Color => {
     const theme: ITheme = {
