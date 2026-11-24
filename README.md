@@ -8,6 +8,8 @@
 
 # Lumen Log
 
+![preview](/img/preview.png)
+
 **Lumen Log** is a customizable logging library for Node.js that provides extended logging capabilities out of the box.
 
 It supports colored output, multiple log levels, file logging, Telegram notifications, structured data visualization, and flexible configuration.
